@@ -5,10 +5,6 @@ import { toPng, toJpeg } from "html-to-image";
 import PosterCanvas, { AlbumData } from "../components/poster/PosterCanvas";
 import PosterCanvasTwo from "../components/poster/PosterCanvasTwo";
 
-// ─────────────────────────────────────────
-// TYPES
-// ─────────────────────────────────────────
-
 interface SearchResult {
   id: string;
   name: string;
@@ -17,10 +13,6 @@ interface SearchResult {
   imageUrl: string;
   totalTracks: number;
 }
-
-// ─────────────────────────────────────────
-// MAIN PAGE
-// ─────────────────────────────────────────
 
 export default function Home() {
   const [template, setTemplate] = useState<1 | 2>(1);
@@ -31,10 +23,8 @@ export default function Home() {
   const [loadingAlbum, setLoadingAlbum] = useState(false);
   const [error, setError] = useState("");
 
-  // This ref points to the poster div — used for export
   const posterRef = useRef<HTMLDivElement>(null);
 
-  // ── Search albums ──────────────────────
   async function handleSearch() {
     if (!query.trim()) return;
     setLoading(true);
@@ -47,21 +37,19 @@ export default function Home() {
       const data = await res.json();
       if (data.error) throw new Error(data.error);
       setSearchResults(data.albums);
-    } catch (err) {
+    } catch {
       setError("Search failed. Please try again.");
     } finally {
       setLoading(false);
     }
   }
 
-  // ── Select album → fetch full data + colors ──
   async function handleSelectAlbum(album: SearchResult) {
     setLoadingAlbum(true);
     setError("");
     setSearchResults([]);
 
     try {
-      // Fetch full album data and colors in parallel
       const [albumRes, colorRes] = await Promise.all([
         fetch(`/api/spotify/album?id=${album.id}`),
         fetch(`/api/colors?url=${encodeURIComponent(album.imageUrl)}`),
@@ -73,21 +61,19 @@ export default function Home() {
       if (albumJson.error) throw new Error(albumJson.error);
       if (colorJson.error) throw new Error(colorJson.error);
 
-      // Combine into one object for the poster
       setAlbumData({
         ...albumJson,
         colors: colorJson.colors,
         dominantHex: colorJson.dominantHex,
         isDark: colorJson.isDark,
       });
-    } catch (err) {
+    } catch {
       setError("Failed to load album. Please try again.");
     } finally {
       setLoadingAlbum(false);
     }
   }
 
-  // ── Export as PNG ──────────────────────
   async function handleExportPng() {
     if (!posterRef.current) return;
     try {
@@ -98,7 +84,6 @@ export default function Home() {
     }
   }
 
-  // ── Export as JPEG ─────────────────────
   async function handleExportJpeg() {
     if (!posterRef.current) return;
     try {
@@ -112,7 +97,6 @@ export default function Home() {
     }
   }
 
-  // ── Helper: trigger browser download ──
   function download(dataUrl: string, filename: string) {
     const link = document.createElement("a");
     link.download = filename;
@@ -120,27 +104,24 @@ export default function Home() {
     link.click();
   }
 
-  // ─────────────────────────────────────────
-  // RENDER
-  // ─────────────────────────────────────────
-
   return (
     <main className="min-h-screen bg-[#0a0a0a] text-white">
 
       {/* ── Header ── */}
-      <div className="border-b border-white/10 px-8 py-6">
-        <h1 className="text-2xl font-bold tracking-tight">
+      <div className="border-b border-white/10 px-4 md:px-8 py-4 md:py-6">
+        <h1 className="text-xl md:text-2xl font-bold tracking-tight">
           Album Poster Generator
         </h1>
-        <p className="text-white/40 text-sm mt-1">
+        <p className="text-white/40 text-xs md:text-sm mt-1">
           Search any album and generate a downloadable poster
         </p>
       </div>
 
-      <div className="flex gap-8 p-8 max-w-[1400px] mx-auto">
+      {/* ── Main layout — vertical on mobile, horizontal on desktop ── */}
+      <div className="flex flex-col md:flex-row gap-6 md:gap-8 p-4 md:p-8 max-w-[1400px] mx-auto">
 
-        {/* ── Left panel: search + controls ── */}
-        <div className="w-[380px] shrink-0 flex flex-col gap-6">
+        {/* ── Controls panel ── */}
+        <div className="w-full md:w-[380px] md:shrink-0 flex flex-col gap-4 md:gap-6">
 
           {/* Search bar */}
           <div className="flex flex-col gap-2">
@@ -159,14 +140,14 @@ export default function Home() {
               <button
                 onClick={handleSearch}
                 disabled={loading}
-                className="bg-white text-black px-5 py-3 rounded-lg text-sm font-semibold hover:bg-white/90 disabled:opacity-40 transition"
+                className="bg-white text-black px-5 py-3 rounded-lg text-sm font-semibold hover:bg-white/90 disabled:opacity-40 transition shrink-0"
               >
                 {loading ? "..." : "Search"}
               </button>
             </div>
           </div>
 
-          {/* Error message */}
+          {/* Error */}
           {error && (
             <div className="text-red-400 text-sm bg-red-400/10 border border-red-400/20 rounded-lg px-4 py-3">
               {error}
@@ -206,14 +187,14 @@ export default function Home() {
             </div>
           )}
 
-          {/* Loading state */}
+          {/* Loading */}
           {loadingAlbum && (
             <div className="text-white/40 text-sm text-center py-8">
               Generating poster...
             </div>
           )}
 
-          {/* Export buttons — only show when poster is ready */}
+          {/* Export buttons */}
           {albumData && !loadingAlbum && (
             <div className="flex flex-col gap-3">
               <label className="text-xs font-medium text-white/50 uppercase tracking-widest">
@@ -241,57 +222,72 @@ export default function Home() {
           )}
         </div>
 
-        {/* ── Right panel: poster preview ── */}
-        <div className="flex-1 flex items-start justify-center">
+        {/* ── Poster preview panel ── */}
+        <div className="flex-1 flex flex-col items-center gap-4">
+
           {!albumData && !loadingAlbum && (
-            <div className="text-white/20 text-sm mt-32">
+            <div className="text-white/20 text-sm mt-8 md:mt-32">
               Your poster preview will appear here
             </div>
           )}
 
           {albumData && (
-  <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "16px" }}>
-    {/* Template toggle */}
-    <div className="flex gap-2 bg-white/5 p-1 rounded-lg border border-white/10">
-      <button
-        onClick={() => setTemplate(1)}
-        className={`px-4 py-2 rounded-md text-sm font-medium transition ${
-          template === 1
-            ? "bg-white text-black"
-            : "text-white/50 hover:text-white"
-        }`}
-      >
-        Template 1
-      </button>
-      <button
-        onClick={() => setTemplate(2)}
-        className={`px-4 py-2 rounded-md text-sm font-medium transition ${
-          template === 2
-            ? "bg-white text-black"
-            : "text-white/50 hover:text-white"
-        }`}
-      >
-        Template 2
-      </button>
-    </div>
+            <div className="flex flex-col items-center gap-4 w-full">
 
-    {/* Poster preview */}
-    <div
-      style={{
-        transform: "scale(0.45)",
-        transformOrigin: "top center",
-        width: "1080px",
-        height: "1620px",
-      }}
-    >
-      {template === 1 ? (
-        <PosterCanvas ref={posterRef} album={albumData} />
-      ) : (
-        <PosterCanvasTwo ref={posterRef} album={albumData} />
-      )}
-    </div>
-  </div>
-)}
+              {/* Template toggle */}
+              <div className="flex gap-2 bg-white/5 p-1 rounded-lg border border-white/10">
+                <button
+                  onClick={() => setTemplate(1)}
+                  className={`px-4 py-2 rounded-md text-sm font-medium transition ${
+                    template === 1
+                      ? "bg-white text-black"
+                      : "text-white/50 hover:text-white"
+                  }`}
+                >
+                  Template 1
+                </button>
+                <button
+                  onClick={() => setTemplate(2)}
+                  className={`px-4 py-2 rounded-md text-sm font-medium transition ${
+                    template === 2
+                      ? "bg-white text-black"
+                      : "text-white/50 hover:text-white"
+                  }`}
+                >
+                  Template 2
+                </button>
+              </div>
+
+              {/* 
+                Poster preview wrapper
+                The poster is always 1080px wide internally
+                We scale it down to fit the screen width
+                On mobile: fits within ~90% of screen width
+                On desktop: scales to 45% of original size
+              */}
+              <div className="w-full overflow-hidden flex justify-center">
+                <div
+                  style={{
+                    // Calculate scale based on container
+                    // 1080px poster scaled to fit mobile screen
+                    transform: "scale(var(--poster-scale, 0.45))",
+                    transformOrigin: "top center",
+                    width: "1080px",
+                    height: "1620px",
+                    // CSS variable set via style — overridden on mobile
+                  }}
+                  className="[--poster-scale:0.28] sm:[--poster-scale:0.35] md:[--poster-scale:0.45]"
+                >
+                  {template === 1 ? (
+                    <PosterCanvas ref={posterRef} album={albumData} />
+                  ) : (
+                    <PosterCanvasTwo ref={posterRef} album={albumData} />
+                  )}
+                </div>
+              </div>
+
+            </div>
+          )}
         </div>
 
       </div>
