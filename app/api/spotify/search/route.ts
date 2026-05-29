@@ -20,7 +20,7 @@ export async function GET(request: NextRequest) {
   try {
     // Get access token from our own token route
     const tokenResponse = await fetch(
-      `${process.env.NEXT_PUBLIC_BASE_URL || "http://127.0.0.1:3000"}/api/spotify/token`
+      `${process.env.NEXT_PUBLIC_BASE_URL || ""}/api/spotify/token`
     );
     const tokenData = await tokenResponse.json();
 
