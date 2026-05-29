@@ -3,6 +3,7 @@
 import { useState, useRef } from "react";
 import { toPng, toJpeg } from "html-to-image";
 import PosterCanvas, { AlbumData } from "../components/poster/PosterCanvas";
+import PosterCanvasTwo from "../components/poster/PosterCanvasTwo";
 
 // ─────────────────────────────────────────
 // TYPES
@@ -22,6 +23,7 @@ interface SearchResult {
 // ─────────────────────────────────────────
 
 export default function Home() {
+  const [template, setTemplate] = useState<1 | 2>(1);
   const [query, setQuery] = useState("");
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [albumData, setAlbumData] = useState<AlbumData | null>(null);
@@ -248,18 +250,48 @@ export default function Home() {
           )}
 
           {albumData && (
-            <div
-              style={{
-                // Scale the 1080px poster down to fit the screen
-                transform: "scale(0.45)",
-                transformOrigin: "top left",
-                width: "1080px",
-                height: "1620px",
-              }}
-            >
-              <PosterCanvas ref={posterRef} album={albumData} />
-            </div>
-          )}
+  <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "16px" }}>
+    {/* Template toggle */}
+    <div className="flex gap-2 bg-white/5 p-1 rounded-lg border border-white/10">
+      <button
+        onClick={() => setTemplate(1)}
+        className={`px-4 py-2 rounded-md text-sm font-medium transition ${
+          template === 1
+            ? "bg-white text-black"
+            : "text-white/50 hover:text-white"
+        }`}
+      >
+        Template 1
+      </button>
+      <button
+        onClick={() => setTemplate(2)}
+        className={`px-4 py-2 rounded-md text-sm font-medium transition ${
+          template === 2
+            ? "bg-white text-black"
+            : "text-white/50 hover:text-white"
+        }`}
+      >
+        Template 2
+      </button>
+    </div>
+
+    {/* Poster preview */}
+    <div
+      style={{
+        transform: "scale(0.45)",
+        transformOrigin: "top center",
+        width: "1080px",
+        height: "1620px",
+      }}
+    >
+      {template === 1 ? (
+        <PosterCanvas ref={posterRef} album={albumData} />
+      ) : (
+        <PosterCanvasTwo ref={posterRef} album={albumData} />
+      )}
+    </div>
+  </div>
+)}
         </div>
 
       </div>
